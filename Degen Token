@@ -14,12 +14,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract RussellSneakerShop is ERC20, Ownable {
 
     mapping(uint256 => uint256) public shopPrices;
+    mapping(address => mapping(uint256 => uint256)) private _playerInventory;
 
     constructor() ERC20("RUSSSNEAKER", "SHOE") Ownable(msg.sender) {
         shopPrices[1] = 4000;  
         shopPrices[2] = 3000;  
         shopPrices[3] = 5000;  
-        shopPrices[4] = 4500; 
+        shopPrices[4] = 4500;
     }
 
     function mintTokens(address to, uint256 amount) public onlyOwner {
@@ -27,30 +28,61 @@ contract RussellSneakerShop is ERC20, Ownable {
     }
 
     function sendTokens(address to, uint256 amount) public {
-        require(balanceOf(msg.sender) >= amount, "Transfer Failed: You have insufficient funds.");
+        require(balanceOf(msg.sender) >= amount, "Transfer Failed: You don't have enough balance.");
         transfer(to, amount);
     }
 
     function listShopItems() external pure returns (string memory) {
-        return "Item Sales: {1} Addidas Samba (4000) {2}  Nike Zoom Freak 3 (3000) {3} Nike Kobe 6 (150) {4} Addidas Superstar (200)";
+        return "Item Sales: {1} Addidas Samba (4000) {2}  Nike Zoom Freak 3 (3000) {3} Nike Kobe 6 (5000) {4} Addidas Superstar (4500)";
     }
 
     function purchaseItem(uint256 item) public {
         require(shopPrices[item] > 0, "Item is not available.");
-        require(balanceOf(msg.sender) >= shopPrices[item], "Redeem Failed: Insufficient funds.");
+        require(balanceOf(msg.sender) >= shopPrices[item], "Redeem Failed: Insufficient balance.");
         _transfer(msg.sender, owner(), shopPrices[item]);
+        _playerInventory[msg.sender][item] += 1;
     }
 
     function burnTokens(uint256 amount) public {
-        require(balanceOf(msg.sender) >= amount, "Burn Failed: you have insufficient funds.");
+        require(balanceOf(msg.sender) >= amount, "Burn Failed: You don't have enough balance.");
         _burn(msg.sender, amount);
     }
 
     function checkBalance() external view returns (uint256) {
         return balanceOf(msg.sender);
     }   
-    
+
+    function checkInventory() external view returns (string memory) {
+        return string(
+            abi.encodePacked(
+                "Addidas Samba (", uintToString(_playerInventory[msg.sender][1]), 
+                ") Nike Zoom Freak 3 (", uintToString(_playerInventory[msg.sender][2]), 
+                ") Nike Kobe 6 (", uintToString(_playerInventory[msg.sender][3]), 
+                ") Addidas Superstar (", uintToString(_playerInventory[msg.sender][4]), ")"
+            )
+        );
+    }
+
     function decimals() public pure override returns (uint8) {
         return 0;
+    }
+
+    function uintToString(uint256 v) internal pure returns (string memory) {
+        if (v == 0) {
+            return "0";
+        }
+        uint256 maxLength = 78;
+        bytes memory reversed = new bytes(maxLength);
+        uint256 i = 0;
+        while (v != 0) {
+            uint256 remainder = v % 10;
+            v = v / 10;
+            reversed[i++] = bytes1(uint8(48 + remainder));
+        }
+        bytes memory s = new bytes(i); 
+        for (uint256 j = 0; j < i; j++) {
+            s[j] = reversed[i - j - 1];
+        }
+        return string(s);
     }
 }
