@@ -14,51 +14,73 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract RussellSneakerShop is ERC20, Ownable {
 
     mapping(uint256 => uint256) public shopPrices;
+    mapping(uint256 => string) public shopItems;
     mapping(address => mapping(uint256 => uint256)) private _playerInventory;
 
+    event TokensMinted(address indexed to, uint256 amount);
+    event TokensTransferred(address indexed from, address indexed to, uint256 amount);
+    event ItemPurchased(address indexed buyer, uint256 itemId, uint256 amount);
+    event TokensBurned(address indexed from, uint256 amount);
+
     constructor() ERC20("RUSSSNEAKER", "SHOE") Ownable(msg.sender) {
-        shopPrices[1] = 4000;  
-        shopPrices[2] = 3000;  
-        shopPrices[3] = 5000;  
+        shopPrices[1] = 4000;
+        shopPrices[2] = 3000;
+        shopPrices[3] = 5000;
         shopPrices[4] = 4500;
+        
+        shopItems[1] = "Addidas Samba";
+        shopItems[2] = "Nike Zoom Freak 3";
+        shopItems[3] = "Nike Kobe 6";
+        shopItems[4] = "Addidas Superstar";
     }
 
     function mintTokens(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
+        emit TokensMinted(to, amount);
     }
 
-    function sendTokens(address to, uint256 amount) public {
+    function transferTokens(address to, uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "Transfer Failed: You don't have enough balance.");
-        transfer(to, amount);
+        _transfer(msg.sender, to, amount);
+        emit TokensTransferred(msg.sender, to, amount);
     }
 
-    function listShopItems() external pure returns (string memory) {
-        return "Item Sales: {1} Addidas Samba (4000) {2}  Nike Zoom Freak 3 (3000) {3} Nike Kobe 6 (5000) {4} Addidas Superstar (4500)";
+    function listShopItems() external view returns (string memory) {
+        return string(
+            abi.encodePacked(
+                "Item Sales: {1} ", shopItems[1], " (", uintToString(shopPrices[1]), ") {2} ",
+                shopItems[2], " (", uintToString(shopPrices[2]), ") {3} ",
+                shopItems[3], " (", uintToString(shopPrices[3]), ") {4} ",
+                shopItems[4], " (", uintToString(shopPrices[4]), ")"
+            )
+        );
     }
 
-    function purchaseItem(uint256 item) public {
+    function buyItem(uint256 item) public {
         require(shopPrices[item] > 0, "Item is not available.");
         require(balanceOf(msg.sender) >= shopPrices[item], "Redeem Failed: Insufficient balance.");
         _transfer(msg.sender, owner(), shopPrices[item]);
         _playerInventory[msg.sender][item] += 1;
+        emit ItemPurchased(msg.sender, item, shopPrices[item]);
     }
 
     function burnTokens(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "Burn Failed: You don't have enough balance.");
         _burn(msg.sender, amount);
+        emit TokensBurned(msg.sender, amount);
     }
 
     function checkBalance() external view returns (uint256) {
         return balanceOf(msg.sender);
-    }   
+    }
 
-    function checkInventory() external view returns (string memory) {
+    function checkBoughtItem() external view returns (string memory) {
         return string(
             abi.encodePacked(
-                "Addidas Samba (", uintToString(_playerInventory[msg.sender][1]), 
-                ") Nike Zoom Freak 3 (", uintToString(_playerInventory[msg.sender][2]), 
-                ") Nike Kobe 6 (", uintToString(_playerInventory[msg.sender][3]), 
-                ") Addidas Superstar (", uintToString(_playerInventory[msg.sender][4]), ")"
+                shopItems[1], " (", uintToString(_playerInventory[msg.sender][1]), 
+                ") ", shopItems[2], " (", uintToString(_playerInventory[msg.sender][2]), 
+                ") ", shopItems[3], " (", uintToString(_playerInventory[msg.sender][3]), 
+                ") ", shopItems[4], " (", uintToString(_playerInventory[msg.sender][4]), ")"
             )
         );
     }
@@ -67,7 +89,7 @@ contract RussellSneakerShop is ERC20, Ownable {
         return 0;
     }
 
-    function uintToString(uint256 v) internal pure returns (string memory) {
+    function uintToString(uint256 v) private pure returns (string memory) {
         if (v == 0) {
             return "0";
         }
