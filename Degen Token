@@ -11,7 +11,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RussellSneakerShop is ERC20, Ownable {
+contract SecretShop is ERC20, Ownable {
 
     mapping(uint256 => uint256) public shopPrices;
     mapping(uint256 => string) public shopItems;
@@ -22,16 +22,16 @@ contract RussellSneakerShop is ERC20, Ownable {
     event ItemPurchased(address indexed buyer, uint256 itemId, uint256 amount);
     event TokensBurned(address indexed from, uint256 amount);
 
-    constructor() ERC20("RUSSSNEAKER", "SHOE") Ownable(msg.sender) {
+    constructor() ERC20("Degen", "DGN") Ownable(msg.sender) {
         shopPrices[1] = 4000;
         shopPrices[2] = 3000;
         shopPrices[3] = 5000;
         shopPrices[4] = 4500;
         
-        shopItems[1] = "Addidas Samba";
-        shopItems[2] = "Nike Zoom Freak 3";
-        shopItems[3] = "Nike Kobe 6";
-        shopItems[4] = "Addidas Superstar";
+        shopItems[1] = "Shoes of Durability";
+        shopItems[2] = "Shoes of Agility";
+        shopItems[3] = "Shoes of Strength";
+        shopItems[4] = "Boots of Travel";
     }
 
     function mintTokens(address to, uint256 amount) public onlyOwner {
